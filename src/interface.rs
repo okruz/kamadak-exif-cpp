@@ -1,3 +1,10 @@
+/*
+ * ########################################################################
+ * The contents of this file is free and unencumbered software released into the
+ * public domain. For more information, please refer to <http://unlicense.org/>
+ * ########################################################################
+ */
+
 use exif::{Exif, In, Reader, Tag};
 use std::os::raw::c_void;
 

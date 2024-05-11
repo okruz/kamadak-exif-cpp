@@ -1,0 +1,9 @@
+# kamadak-exif-cpp
+This repository contains C/C++ bindings for kamadak-exif. 
+
+
+## License
+The contents of this repository are published under The Unlicense. Note, however, that the kamadak-exif crate and its dependencies are is published under a BSD 2-Clause license, as of writing this (this is not legal advice, do your own research).
+
+## How to build
+TODO
