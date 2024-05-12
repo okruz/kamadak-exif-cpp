@@ -5,7 +5,7 @@
  * ########################################################################
  */
 
-use exif::{Exif, In, Reader, Tag};
+use exif::{Context as KamadakContext, Exif, In, Reader, Tag as KamadakTag};
 use std::ffi::{c_char, CString};
 use std::os::raw::c_void;
 
@@ -156,4 +156,56 @@ pub enum ErrorCodes {
 
 // ##################################### ErrorCodes #####################################
 // ######################################################################################
+// ####################################### Context ######################################
+
+/// One-to-one mapping for the KamadakContext from the kamadak-exif crate.
+#[repr(C)]
+pub enum Context {
+    Tiff,
+    Exif,
+    Gps,
+    Interop,
+}
+
+impl TryFrom<KamadakContext> for Context {
+    type Error = ErrorCodes;
+
+    fn try_from(value: KamadakContext) -> Result<Self, Self::Error> {
+        match value {
+            KamadakContext::Tiff => Ok(Self::Tiff),
+            KamadakContext::Exif => Ok(Self::Exif),
+            KamadakContext::Gps => Ok(Self::Gps),
+            KamadakContext::Interop => Ok(Self::Interop),
+            // Has to be here due to KamadakContext being declare non_exhaustive.
+            _ => Err(ErrorCodes::UnknownError),
+        }
+    }
+}
+
+impl Into<KamadakContext> for Context {
+    fn into(self) -> KamadakContext {
+        match self {
+            Self::Tiff => KamadakContext::Tiff,
+            Self::Exif => KamadakContext::Exif,
+            Self::Gps => KamadakContext::Gps,
+            Self::Interop => KamadakContext::Interop,
+        }
+    }
+}
+
+// ####################################### Context ######################################
 // ######################################################################################
+// ######################################### Tag ########################################
+
+/// One-to-one mapping for the KamadakTag from the kamadak-exif crate.
+#[repr(C)]
+pub struct Tag {
+    pub context: Context,
+    pub ifd_num: u16,
+}
+
+impl Into<KamadakTag> for Tag {
+    fn into(self) -> KamadakTag {
+        KamadakTag(self.context.into(), self.ifd_num)
+    }
+}
