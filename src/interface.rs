@@ -8,7 +8,6 @@
 use exif::{Exif, In, Reader, Tag};
 use std::ffi::{c_char, CString};
 use std::os::raw::c_void;
-use std::sync::Mutex;
 
 // ######################################################################################
 // ######################################################################################
@@ -21,7 +20,7 @@ pub(crate) struct ExifScope {
     pub(crate) exif: Exif,
     /// The CStrings returned as "*const char" over the ffi interface. Once this struct is dropped,
     /// the CStrings will be dropped as well.
-    cstrings: Mutex<Vec<CString>>,
+    cstrings: Vec<CString>,
 }
 
 impl ExifScope {
@@ -29,12 +28,10 @@ impl ExifScope {
     /// once the ExifScope is dropped. Returns the contents of the CString as a null-terminated
     /// "*const char"-pointer.
     pub(crate) fn add_string(&mut self, data: &str) -> Result<*const c_char, ErrorCodes> {
-        let cstrings = self
+        self.cstrings
+            .push(CString::new(data).map_err(|_| ErrorCodes::UnknownError)?);
+        Ok(self
             .cstrings
-            .get_mut()
-            .map_err(|_| ErrorCodes::UnknownError)?;
-        cstrings.push(CString::new(data).map_err(|_| ErrorCodes::UnknownError)?);
-        Ok(cstrings
             .last()
             .ok_or(ErrorCodes::UnknownError)?
             .as_bytes_with_nul()
@@ -47,6 +44,8 @@ impl ExifScope {
 // ###################################### ExifData ######################################
 
 /// The opaque struct returned over the ffi interface. The C/C++ side shall not be concerned with the internal representation anyway.
+///
+/// Note: The struct is NOT thread-safe and may not be used concurrently without proper synchronisation.
 #[repr(C)]
 pub struct ExifData {
     val: *mut c_void,
@@ -70,7 +69,7 @@ impl ExifData {
         // Move exif onto the heap and make the box give up ownership to extend the lifetime until drop_explicitly() is called.
         let exif_scope_ptr: *mut ExifScope = Box::into_raw(Box::new(ExifScope {
             exif: exif,
-            cstrings: Mutex::new(vec![]),
+            cstrings: vec![],
         }));
         Self {
             val: exif_scope_ptr as *mut c_void,
