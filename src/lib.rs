@@ -62,7 +62,7 @@ pub extern "C" fn EXIF_is_little_endian(data: ExifData, little_endian: &mut bool
 
 #[no_mangle]
 pub extern "C" fn EXIF_get_some_string(data: ExifData, string: *mut *const c_char) -> ErrorCodes {
-    let exif_scope = match data.to_exif_scope() {
+    let exif_scope = match data.to_exif_scope_mut() {
         Err(error_code) => return error_code,
         Ok(val) => val,
     };
