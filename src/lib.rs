@@ -8,7 +8,7 @@
 #![crate_type = "cdylib"]
 mod interface;
 use crate::interface::*;
-use exif::{Exif, In, Reader, Tag};
+use exif::{Reader};
 use std::ffi::c_char;
 use std::io::Cursor;
 

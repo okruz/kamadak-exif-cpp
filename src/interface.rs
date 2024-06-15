@@ -5,7 +5,7 @@
  * ########################################################################
  */
 
-use exif::{Context as KamadakContext, Exif, In, Reader, Tag as KamadakTag};
+use exif::{Context as KamadakContext, Exif, Tag as KamadakTag};
 use std::ffi::{c_char, CString};
 use std::os::raw::c_void;
 
