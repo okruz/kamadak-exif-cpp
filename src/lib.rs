@@ -9,7 +9,6 @@
 mod interface;
 use crate::interface::*;
 use exif::Reader;
-use std::ffi::c_char;
 use std::io::Cursor;
 
 /// Loads the exif data from encoded image.
@@ -60,22 +59,7 @@ pub extern "C" fn EXIF_is_little_endian(data: ExifData, little_endian: &mut bool
     ErrorCodes::Ok
 }
 
-#[no_mangle]
-pub extern "C" fn EXIF_get_some_string(data: ExifData, string: *mut *const c_char) -> ErrorCodes {
-    let exif_scope = match data.to_exif_scope_mut() {
-        Err(error_code) => return error_code,
-        Ok(val) => val,
-    };
-
-    unsafe {
-        *string = match exif_scope.add_string("Hello World") {
-            Err(error_code) => return error_code,
-            Ok(val) => val as *const c_char,
-        };
-    }
-    ErrorCodes::Ok
-}
-
+/// Loads the exif fields and returns them as string key-value pairs.
 #[no_mangle]
 pub extern "C" fn EXIF_load_entries(
     data: ExifData,

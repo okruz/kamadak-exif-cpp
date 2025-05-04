@@ -30,8 +30,7 @@ static std::ostream& operator<<(std::ostream& o, EXIF_ErrorCodes e) {
 }
 
 static std::vector<char> readFile() {
-  std::ifstream file(
-      "/home/oil/Bilder/Peak-in-kuh-e-genu-mountain-range-iran.jpg");
+  std::ifstream file("images/Peak-in-kuh-e-genu-mountain-range-iran.jpg");
 
   return std::vector<char>{std::istreambuf_iterator<char>(file),
                            std::istreambuf_iterator<char>()};
@@ -48,10 +47,6 @@ int main() {
   std::cout << "is_little_endian: "
             << EXIF_is_little_endian(parseResult.data, &littleEndian) << " "
             << std::boolalpha << littleEndian << std::endl;
-  const char* str = nullptr;
-  std::cout << "get_some_string(parseResult.data, str): "
-            << EXIF_get_some_string(parseResult.data, &str) << ": " << str
-            << std::endl;
 
   const EXIF_KeyValuePair* entries;
   size_t num;
@@ -60,6 +55,7 @@ int main() {
   for (size_t i = 0; i < num; i++) {
     std::cout << entries[i].key << ": " << entries[i].value << "\n";
   }
+  std::cout << std::endl;
 
   std::cout << "free_exif(parseResult.data): " << EXIF_free(parseResult.data)
             << std::endl;
