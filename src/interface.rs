@@ -58,7 +58,8 @@ impl ExifScope {
         let mut tmp_key_value_pairs: Vec<(String, String)> = vec![];
 
         for f in self.exif.fields() {
-            let key = format!("{}.{}", f.ifd_num.index(), f.tag);
+            //let key = format!("{}.{}", f.ifd_num.index(), f.tag);
+            let key = format!("{}", f.tag);
             let value = format!("{}", f.display_value().with_unit(&self.exif));
             tmp_key_value_pairs.push((key, value));
         }
