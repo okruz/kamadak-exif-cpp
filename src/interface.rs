@@ -5,7 +5,7 @@
  * ########################################################################
  */
 
-use exif::{Context as KamadakContext, Exif, Tag as KamadakTag};
+use exif::Exif;
 use std::ffi::{c_char, CString};
 use std::os::raw::c_void;
 
@@ -21,6 +21,7 @@ pub(crate) struct ExifScope {
     /// The CStrings returned as "*const char" over the ffi interface. Once this struct is dropped,
     /// the CStrings will be dropped as well.
     cstrings: Vec<CString>,
+    key_value_pairs: Vec<KeyValuePair>,
 }
 
 impl ExifScope {
@@ -36,6 +37,39 @@ impl ExifScope {
             .ok_or(ErrorCodes::UnknownError)?
             .as_bytes_with_nul()
             .as_ptr() as *const c_char)
+    }
+
+    pub(crate) fn add_key_value_pair(&mut self, key: &str, value: &str) -> Result<(), ErrorCodes> {
+        let key_value_pair = KeyValuePair {
+            key: self.add_string(key)?,
+            value: self.add_string(value)?,
+        };
+        self.key_value_pairs.push(key_value_pair);
+        Ok(())
+    }
+
+    pub(crate) fn retrieve_data(
+        &mut self,
+        key_value_pairs: *mut *const KeyValuePair,
+        num_elements: &mut usize,
+    ) -> Result<(), ErrorCodes> {
+        // Remove previously held entries.
+        self.key_value_pairs.clear();
+        let mut tmp_key_value_pairs: Vec<(String, String)> = vec![];
+
+        for f in self.exif.fields() {
+            let key = format!("{}.{}", f.ifd_num.index(), f.tag);
+            let value = format!("{}", f.display_value().with_unit(&self.exif));
+            tmp_key_value_pairs.push((key, value));
+        }
+
+        for (key, value) in tmp_key_value_pairs.iter() {
+            self.add_key_value_pair(&key, &value)?;
+        }
+
+        *num_elements = self.key_value_pairs.len();
+        unsafe { *key_value_pairs = self.key_value_pairs.as_ptr() };
+        Ok(())
     }
 }
 
@@ -70,6 +104,7 @@ impl ExifData {
         let exif_scope_ptr: *mut ExifScope = Box::into_raw(Box::new(ExifScope {
             exif: exif,
             cstrings: vec![],
+            key_value_pairs: vec![],
         }));
         Self {
             val: exif_scope_ptr as *mut c_void,
@@ -156,56 +191,10 @@ pub enum ErrorCodes {
 
 // ##################################### ErrorCodes #####################################
 // ######################################################################################
-// ####################################### Context ######################################
+// ###################################### ResultMap #####################################
 
-/// One-to-one mapping for the KamadakContext from the kamadak-exif crate.
 #[repr(C)]
-pub enum Context {
-    Tiff,
-    Exif,
-    Gps,
-    Interop,
-}
-
-impl TryFrom<KamadakContext> for Context {
-    type Error = ErrorCodes;
-
-    fn try_from(value: KamadakContext) -> Result<Self, Self::Error> {
-        match value {
-            KamadakContext::Tiff => Ok(Self::Tiff),
-            KamadakContext::Exif => Ok(Self::Exif),
-            KamadakContext::Gps => Ok(Self::Gps),
-            KamadakContext::Interop => Ok(Self::Interop),
-            // Has to be here due to KamadakContext being declare non_exhaustive.
-            _ => Err(ErrorCodes::UnknownError),
-        }
-    }
-}
-
-impl Into<KamadakContext> for Context {
-    fn into(self) -> KamadakContext {
-        match self {
-            Self::Tiff => KamadakContext::Tiff,
-            Self::Exif => KamadakContext::Exif,
-            Self::Gps => KamadakContext::Gps,
-            Self::Interop => KamadakContext::Interop,
-        }
-    }
-}
-
-// ####################################### Context ######################################
-// ######################################################################################
-// ######################################### Tag ########################################
-
-/// One-to-one mapping for the KamadakTag from the kamadak-exif crate.
-#[repr(C)]
-pub struct Tag {
-    pub context: Context,
-    pub ifd_num: u16,
-}
-
-impl Into<KamadakTag> for Tag {
-    fn into(self) -> KamadakTag {
-        KamadakTag(self.context.into(), self.ifd_num)
-    }
+pub struct KeyValuePair {
+    pub key: *const c_char,
+    pub value: *const c_char,
 }

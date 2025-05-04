@@ -53,6 +53,14 @@ int main() {
             << EXIF_get_some_string(parseResult.data, &str) << ": " << str
             << std::endl;
 
+  const EXIF_KeyValuePair* entries;
+  size_t num;
+  EXIF_load_entries(parseResult.data, &entries, &num);
+  std::cout << "Found " << num << " entries:\n";
+  for (size_t i = 0; i < num; i++) {
+    std::cout << entries[i].key << ": " << entries[i].value << "\n";
+  }
+
   std::cout << "free_exif(parseResult.data): " << EXIF_free(parseResult.data)
             << std::endl;
 

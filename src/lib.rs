@@ -8,7 +8,7 @@
 #![crate_type = "cdylib"]
 mod interface;
 use crate::interface::*;
-use exif::{Reader};
+use exif::Reader;
 use std::ffi::c_char;
 use std::io::Cursor;
 
@@ -74,4 +74,20 @@ pub extern "C" fn EXIF_get_some_string(data: ExifData, string: *mut *const c_cha
         };
     }
     ErrorCodes::Ok
+}
+
+#[no_mangle]
+pub extern "C" fn EXIF_load_entries(
+    data: ExifData,
+    key_value_pairs: *mut *const KeyValuePair,
+    num_elements: &mut usize,
+) -> ErrorCodes {
+    let exif_scope = match data.to_exif_scope_mut() {
+        Err(error_code) => return error_code,
+        Ok(val) => val,
+    };
+    match exif_scope.retrieve_data(key_value_pairs, num_elements) {
+        Err(error_code) => error_code,
+        Ok(()) => ErrorCodes::Ok,
+    }
 }
