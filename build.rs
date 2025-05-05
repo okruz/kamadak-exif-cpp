@@ -10,7 +10,7 @@ extern crate cbindgen;
 use std::{env, path::PathBuf};
 
 fn main() {
-    let cbindgen_output = PathBuf::from(env::var("CBINDGEN_OUTPUT").unwrap());
+    let cbindgen_output = PathBuf::from("kamadak_exif_cpp.h");
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let config = cbindgen::Config::from_root_or_default(manifest_dir.clone());
     cbindgen::Builder::new()
