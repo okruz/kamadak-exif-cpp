@@ -2,14 +2,14 @@
 name = "kamadak-exif-cpp"
 version = "0.1.0"
 authors = ["okruz@github.com"]
-edition = "2021"
+edition = "2024"
 license = "Unlicense"
 
 [dependencies]
-kamadak-exif = "0.5.5"
+kamadak-exif = "0.6.1"
 
 [build-dependencies]
-cbindgen = "0.27.0"
+cbindgen = "0.28.0"
 
 [profile.release]
 strip=true

@@ -17,7 +17,7 @@ use std::io::Cursor;
 /// the ExifParseResult::error_code will indicate what went wrong and the ExifParseResult::data::val
 /// pointer will be a nullptr. Else, the the ExifParseResult::error_code will ErrorCodes::Ok and the
 /// ExifParseResult::data::val will point to the parsed data.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn EXIF_load(data: *const u8, length: usize) -> ExifParseResult {
     if data.is_null() {
         return ExifParseResult::make_null();
@@ -40,7 +40,7 @@ pub extern "C" fn EXIF_load(data: *const u8, length: usize) -> ExifParseResult {
 ///
 /// Frees all data allocated during the extraction of the EXIF information.
 /// If the returned ErrorCodes is not ErrorCodes::Ok, the deallocation could not be performed.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn EXIF_free(data: ExifData) -> ErrorCodes {
     data.drop_explicitly()
 }
@@ -49,7 +49,7 @@ pub extern "C" fn EXIF_free(data: ExifData) -> ErrorCodes {
 ///
 /// Indicates whether or not the data in the EXIF fields are encoded in little endian or big endian
 /// byte order. If the returned ErrorCodes is not ErrorCodes::Ok, the value could not be extracted.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn EXIF_is_little_endian(data: ExifData, little_endian: &mut bool) -> ErrorCodes {
     let exif_scope = match data.to_exif_scope() {
         Err(error_code) => return error_code,
@@ -60,7 +60,7 @@ pub extern "C" fn EXIF_is_little_endian(data: ExifData, little_endian: &mut bool
 }
 
 /// Loads the exif fields and returns them as string key-value pairs.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn EXIF_load_entries(
     data: ExifData,
     key_value_pairs: *mut *const KeyValuePair,
