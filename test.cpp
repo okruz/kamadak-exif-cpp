@@ -44,7 +44,7 @@ int main() {
             << parseResult.error_code << std::endl;
   bool littleEndian = false;
 
-  std::cout << "is_little_endian: "
+  std::cout << "EXIF_is_little_endian(parseResult.data, &littleEndian): "
             << EXIF_is_little_endian(parseResult.data, &littleEndian) << " "
             << std::boolalpha << littleEndian << std::endl;
 
@@ -57,7 +57,7 @@ int main() {
   }
   std::cout << std::endl;
 
-  std::cout << "free_exif(parseResult.data): " << EXIF_free(parseResult.data)
+  std::cout << "EXIF_free(parseResult.data): " << EXIF_free(parseResult.data)
             << std::endl;
 
   return 0;

@@ -18,13 +18,43 @@ use std::os::raw::c_void;
 pub(crate) struct ExifScope {
     /// The parsed exif data (struct from the kadamak crate).
     pub(crate) exif: Exif,
+    lm: LifetimeManager,
+}
+
+impl ExifScope {
+    pub(crate) fn retrieve_data(
+        &mut self,
+        key_value_pairs: *mut *const KeyValuePair,
+        num_elements: &mut usize,
+    ) -> Result<(), ErrorCodes> {
+        // Remove previously held entries.
+        self.lm.key_value_pairs.clear();
+
+        for f in self.exif.fields() {
+            let key = format!("{}", f.tag);
+            let value = format!("{}", f.display_value().with_unit(&self.exif));
+            self.lm.add_key_value_pair(&key, &value)?;
+        }
+
+        *num_elements = self.lm.key_value_pairs.len();
+        unsafe { *key_value_pairs = self.lm.key_value_pairs.as_ptr() };
+        Ok(())
+    }
+}
+
+// ##################################### ExifScope ######################################
+// ######################################################################################
+// ################################## LifetimeManager ###################################
+
+/// Internal memory management struct. Extracted from ExifScope as distinct struct to make the borrow checker happy.
+struct LifetimeManager {
     /// The CStrings returned as "*const char" over the ffi interface. Once this struct is dropped,
     /// the CStrings will be dropped as well.
     cstrings: Vec<CString>,
     key_value_pairs: Vec<KeyValuePair>,
 }
 
-impl ExifScope {
+impl LifetimeManager {
     /// Converts a &str to a CString and adds it to the ExifScope, such that it will be dropped,
     /// once the ExifScope is dropped. Returns the contents of the CString as a null-terminated
     /// "*const char"-pointer.
@@ -47,34 +77,9 @@ impl ExifScope {
         self.key_value_pairs.push(key_value_pair);
         Ok(())
     }
-
-    pub(crate) fn retrieve_data(
-        &mut self,
-        key_value_pairs: *mut *const KeyValuePair,
-        num_elements: &mut usize,
-    ) -> Result<(), ErrorCodes> {
-        // Remove previously held entries.
-        self.key_value_pairs.clear();
-        let mut tmp_key_value_pairs: Vec<(String, String)> = vec![];
-
-        for f in self.exif.fields() {
-            //let key = format!("{}.{}", f.ifd_num.index(), f.tag);
-            let key = format!("{}", f.tag);
-            let value = format!("{}", f.display_value().with_unit(&self.exif));
-            tmp_key_value_pairs.push((key, value));
-        }
-
-        for (key, value) in tmp_key_value_pairs.iter() {
-            self.add_key_value_pair(&key, &value)?;
-        }
-
-        *num_elements = self.key_value_pairs.len();
-        unsafe { *key_value_pairs = self.key_value_pairs.as_ptr() };
-        Ok(())
-    }
 }
 
-// ##################################### ExifScope ######################################
+// ################################## LifetimeManager ###################################
 // ######################################################################################
 // ###################################### ExifData ######################################
 
@@ -104,8 +109,10 @@ impl ExifData {
         // Move exif onto the heap and make the box give up ownership to extend the lifetime until drop_explicitly() is called.
         let exif_scope_ptr: *mut ExifScope = Box::into_raw(Box::new(ExifScope {
             exif: exif,
-            cstrings: vec![],
-            key_value_pairs: vec![],
+            lm: LifetimeManager {
+                cstrings: vec![],
+                key_value_pairs: vec![],
+            },
         }));
         Self {
             val: exif_scope_ptr as *mut c_void,
