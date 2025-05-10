@@ -18,7 +18,7 @@ use std::io::Cursor;
 /// pointer will be a nullptr. Else, the the ExifParseResult::error_code will ErrorCodes::Ok and the
 /// ExifParseResult::data::val will point to the parsed data.
 #[unsafe(no_mangle)]
-pub extern "C" fn EXIF_load(data: *const u8, length: usize) -> ExifParseResult {
+pub unsafe extern "C" fn EXIF_load(data: *const u8, length: usize) -> ExifParseResult {
     if data.is_null() {
         return ExifParseResult::make_null();
     }
@@ -59,7 +59,7 @@ pub extern "C" fn EXIF_is_little_endian(data: ExifData, little_endian: &mut bool
     ErrorCodes::Ok
 }
 
-/// Loads the exif fields and returns them as string key-value pairs.
+/// Loads the exif fields and returns them as string key-value pairs. All returned pointers will be invalidated once either EXIF_free() is called or EXIF_load_entries() is called again.
 #[unsafe(no_mangle)]
 pub extern "C" fn EXIF_load_entries(
     data: ExifData,

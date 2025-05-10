@@ -29,6 +29,7 @@ impl ExifScope {
     ) -> Result<(), ErrorCodes> {
         // Remove previously held entries.
         self.lm.key_value_pairs.clear();
+        self.lm.cstrings.clear();
 
         for f in self.exif.fields() {
             let key = format!("{}", f.tag);
@@ -108,7 +109,7 @@ impl ExifData {
     pub(crate) fn from_exif(exif: Exif) -> Self {
         // Move exif onto the heap and make the box give up ownership to extend the lifetime until drop_explicitly() is called.
         let exif_scope_ptr: *mut ExifScope = Box::into_raw(Box::new(ExifScope {
-            exif: exif,
+            exif,
             lm: LifetimeManager {
                 cstrings: vec![],
                 key_value_pairs: vec![],
@@ -120,7 +121,7 @@ impl ExifData {
     }
 
     /// Casts the val pointer to a shared reference to an ExifScope.
-    pub(crate) fn to_exif_scope(self) -> Result<&'static ExifScope, ErrorCodes> {
+    pub(crate) fn to_exif_scope(&self) -> Result<&'static ExifScope, ErrorCodes> {
         if self.is_null() {
             return Err(ErrorCodes::Nullptr);
         }
@@ -132,7 +133,8 @@ impl ExifData {
     }
 
     /// Casts the val pointer to a mutable reference to an ExifScope.
-    pub(crate) fn to_exif_scope_mut(self) -> Result<&'static mut ExifScope, ErrorCodes> {
+    #[allow(clippy::wrong_self_convention)] // Silence clippy warning
+    pub(crate) fn to_exif_scope_mut(&self) -> Result<&'static mut ExifScope, ErrorCodes> {
         if self.is_null() {
             return Err(ErrorCodes::Nullptr);
         }
